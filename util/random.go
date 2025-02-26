@@ -41,3 +41,25 @@ func RandomCurrency() string {
 	n := len(currencies) // len = length of the slice
 	return currencies[rand.Intn(n)]
 }
+
+func RandomEmail() string {
+	return RandomString(6) + "@gmail.com"
+}
+
+func RandomPassword() string {
+	return RandomString(6)
+}
+
+type Transfer struct {
+	FromAccountID int64
+	ToAccountID   int64
+	Amount        int64
+}
+
+func RandomTransfer() Transfer {
+	return Transfer {
+		FromAccountID: RandomInt(1, 100),
+		ToAccountID: RandomInt(1, 100),
+		Amount: RandomMoney(),
+	}
+}
