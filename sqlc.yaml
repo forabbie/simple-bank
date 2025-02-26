@@ -5,7 +5,7 @@ sql:
     schema: "database/migration/"
     gen:
       go:
-        package: "sqlc"
+        package: "db"
         out: "database/sqlc"
         # sql_package: "pgx/v5"
         sql_package: "database/sql"
