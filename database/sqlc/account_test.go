@@ -6,14 +6,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/forabbie/simplebank/util"
+	"github.com/forabbie/vank-app/util"
 	"github.com/stretchr/testify/require"
 )
 
 func createRandomAccount(t *testing.T) Account {
-	arg := CreateAccountParams {
-		Owner: util.RandomOwner(),
-		Balance: util.RandomMoney(),
+	arg := CreateAccountParams{
+		Owner:    util.RandomOwner(),
+		Balance:  util.RandomMoney(),
 		Currency: util.RandomCurrency(),
 	}
 	account, err := testQueries.CreateAccount(context.Background(), arg)
@@ -30,7 +30,7 @@ func createRandomAccount(t *testing.T) Account {
 	return account
 }
 
-func TestCreateAccount(t *testing.T)  {
+func TestCreateAccount(t *testing.T) {
 	createRandomAccount(t)
 }
 
@@ -49,8 +49,8 @@ func TestGetAccount(t *testing.T) {
 func TestUpdateAccount(t *testing.T) {
 	account1 := createRandomAccount(t)
 
-	arg := UpdateAccountParams {
-		ID: account1.ID,
+	arg := UpdateAccountParams{
+		ID:      account1.ID,
 		Balance: util.RandomMoney(),
 	}
 	account2, err := testQueries.UpdateAccount(context.Background(), arg)
@@ -79,8 +79,8 @@ func TestListAccount(t *testing.T) {
 		createRandomAccount(t)
 	}
 
-	arg := ListAccountsParams {
-		Limit: 5,
+	arg := ListAccountsParams{
+		Limit:  5,
 		Offset: 0,
 	}
 	accounts, err := testQueries.ListAccounts(context.Background(), arg)

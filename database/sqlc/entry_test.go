@@ -5,16 +5,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/forabbie/simplebank/util"
+	"github.com/forabbie/vank-app/util"
 	"github.com/stretchr/testify/require"
 )
 
-
 func TestCreatEntry(t *testing.T) {
 	account := createRandomAccount(t)
-	arg := CreateEntryParams {
+	arg := CreateEntryParams{
 		AccountID: account.ID,
-		Amount: util.RandomMoney(),
+		Amount:    util.RandomMoney(),
 	}
 	entry, err := testQueries.CreateEntry(context.Background(), arg)
 	require.NoError(t, err)
@@ -29,9 +28,9 @@ func TestCreatEntry(t *testing.T) {
 
 func TestGetEntry(t *testing.T) {
 	account := createRandomAccount(t)
-	arg := CreateEntryParams {
+	arg := CreateEntryParams{
 		AccountID: account.ID,
-		Amount: util.RandomMoney(),
+		Amount:    util.RandomMoney(),
 	}
 	entry1, err := testQueries.CreateEntry(context.Background(), arg)
 	require.NoError(t, err)
@@ -48,19 +47,19 @@ func TestGetEntry(t *testing.T) {
 
 func TestListEntries(t *testing.T) {
 	account := createRandomAccount(t)
-	arg := CreateEntryParams {
+	arg := CreateEntryParams{
 		AccountID: account.ID,
-		Amount: util.RandomMoney(),
+		Amount:    util.RandomMoney(),
 	}
 	for i := 0; i < 10; i++ {
 		_, err := testQueries.CreateEntry(context.Background(), arg)
 		require.NoError(t, err)
 	}
 
-	listArg := ListEntriesParams {
+	listArg := ListEntriesParams{
 		AccountID: account.ID,
-		Limit: 5,
-		Offset: 5,
+		Limit:     5,
+		Offset:    5,
 	}
 	entries, err := testQueries.ListEntries(context.Background(), listArg)
 	require.NoError(t, err)

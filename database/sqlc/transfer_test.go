@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/forabbie/simplebank/util"
+	"github.com/forabbie/vank-app/util"
 	"github.com/stretchr/testify/require"
 )
 
