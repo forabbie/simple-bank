@@ -1,4 +1,4 @@
-module github.com/forabbie/simplebank
+module github.com/forabbie/vank-app
 
 go 1.24.0
 
