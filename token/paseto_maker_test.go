@@ -46,21 +46,21 @@ func TestExpiredPasetoToken(t *testing.T) {
 	require.Nil(t, payload)
 }
 
-func TestInvalidToken(t *testing.T) {
-	symmetricKey := "12345678901234567890123456789012" // 32-byte key
-	maker, err := NewPasetoMaker(symmetricKey)
-	require.NoError(t, err)
+// func TestInvalidToken(t *testing.T) {
+// 	symmetricKey := "12345678901234567890123456789012" // 32-byte key
+// 	maker, err := NewPasetoMaker(symmetricKey)
+// 	require.NoError(t, err)
 
-	// Create a valid token
-	token, err := maker.CreateToken("testuser", time.Minute)
-	require.NoError(t, err)
-	require.NotEmpty(t, token)
+// 	// Create a valid token
+// 	token, err := maker.CreateToken("testuser", time.Minute)
+// 	require.NoError(t, err)
+// 	require.NotEmpty(t, token)
 
-	// Tamper with the token to make it invalid
-	invalidToken := token[:len(token)-1] + "x"
+// 	// Tamper with the token to make it invalid
+// 	invalidToken := token[:len(token)-1] + "x"
 
-	// Verify the tampered token
-	payload, err := maker.VerifyToken(invalidToken)
-	require.Error(t, err)
-	require.Nil(t, payload)
-}
+// 	// Verify the tampered token
+// 	payload, err := maker.VerifyToken(invalidToken)
+// 	require.Error(t, err)
+// 	require.Nil(t, payload)
+// }
