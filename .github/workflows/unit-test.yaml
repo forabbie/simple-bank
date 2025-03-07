@@ -1,5 +1,4 @@
-# This workflow will build a golang project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+# This workflow will build and test a Golang project
 
 name: Run unit tests
 
@@ -13,29 +12,24 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    # Service containers to run with `container-job`
     services:
-      # Label used to access the service container
       postgres:
-        # Docker Hub image
         image: postgres
-        # Provide the password for postgres
         env:
           POSTGRES_USER: root
           POSTGRES_PASSWORD: changeme
           POSTGRES_DB: simplebank
-        # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
         ports:
-          # Maps tcp port 5432 on service container to the host
           - 5432:5432
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Go
         uses: actions/setup-go@v4
@@ -49,8 +43,41 @@ jobs:
           sudo chmod +x /usr/local/bin/migrate
           which migrate
 
+      - name: Debug environment variables
+        run: |
+          echo "DB_DRIVER: $DB_DRIVER"
+          echo "DB_SOURCE: $DB_SOURCE"
+          echo "SERVER_ADDRESS: $SERVER_ADDRESS"
+          echo "TOKEN_SYMMETRIC_KEY: $TOKEN_SYMMETRIC_KEY"
+          echo "ACCESS_TOKEN_DURATION: $ACCESS_TOKEN_DURATION"
+        env:
+          DB_DRIVER: ${{ secrets.DB_DRIVER }}
+          DB_SOURCE: ${{ secrets.DB_SOURCE }}
+          SERVER_ADDRESS: ${{ secrets.SERVER_ADDRESS }}
+          TOKEN_SYMMETRIC_KEY: ${{ secrets.TOKEN_SYMMETRIC_KEY }}
+          ACCESS_TOKEN_DURATION: ${{ secrets.ACCESS_TOKEN_DURATION }}
+
+      - name: Wait for Postgres to be ready
+        run: |
+          until pg_isready -h localhost -p 5432 -U root; do
+            echo "Waiting for Postgres..."
+            sleep 2
+          done
+
       - name: Run migrations
+        env:
+          DB_DRIVER: ${{ secrets.DB_DRIVER }}
+          DB_SOURCE: ${{ secrets.DB_SOURCE }}
+          SERVER_ADDRESS: ${{ secrets.SERVER_ADDRESS }}
+          TOKEN_SYMMETRIC_KEY: ${{ secrets.TOKEN_SYMMETRIC_KEY }}
+          ACCESS_TOKEN_DURATION: ${{ secrets.ACCESS_TOKEN_DURATION }}
         run: make migrateup
 
-      - name: Test
+      - name: Run unit tests
+        env:
+          DB_DRIVER: ${{ secrets.DB_DRIVER }}
+          DB_SOURCE: ${{ secrets.DB_SOURCE }}
+          SERVER_ADDRESS: ${{ secrets.SERVER_ADDRESS }}
+          TOKEN_SYMMETRIC_KEY: ${{ secrets.TOKEN_SYMMETRIC_KEY }}
+          ACCESS_TOKEN_DURATION: ${{ secrets.ACCESS_TOKEN_DURATION }}
         run: make test
