@@ -1,7 +1,6 @@
 package util
 
 import (
-	"log"
 	"time"
 
 	"github.com/spf13/viper"
@@ -21,16 +20,13 @@ func LoadConfig(path string) (config Config, err error) {
 	viper.SetConfigName(".env")
 	viper.SetConfigType("env")
 
-	// Read from environment variables first
 	viper.AutomaticEnv()
 
-	// Try to read from .env file (optional)
-	if err = viper.ReadInConfig(); err != nil {
-		log.Println("No .env file found. Using environment variables instead.")
-		err = nil // Ignore error if .env is missing
+	err = viper.ReadInConfig()
+	if err != nil {
+		return
 	}
 
-	// Unmarshal into config struct
 	err = viper.Unmarshal(&config)
 	return
 }
