@@ -8,11 +8,12 @@ import (
 )
 
 type Config struct {
-	DBDriver            string        `mapstructure:"DB_DRIVER"`
-	DBSource            string        `mapstructure:"DB_SOURCE"`
-	ServerAddress       string        `mapstructure:"SERVER_ADDRESS"`
-	TokenSymmetricKey   string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
-	AccessTokenDuration time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
+	DBDriver             string        `mapstructure:"DB_DRIVER"`
+	DBSource             string        `mapstructure:"DB_SOURCE"`
+	ServerAddress        string        `mapstructure:"SERVER_ADDRESS"`
+	TokenSymmetricKey    string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
+	AccessTokenDuration  time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
+	RefreshTokenDuration time.Duration `mapstructure:"REFRESH_TOKEN_DURATION"`
 }
 
 // LoadConfig loads configuration from environment variables
@@ -27,6 +28,7 @@ func LoadConfig(path string) (config Config, err error) {
 	viper.BindEnv("SERVER_ADDRESS")
 	viper.BindEnv("TOKEN_SYMMETRIC_KEY")
 	viper.BindEnv("ACCESS_TOKEN_DURATION")
+	viper.BindEnv("REFRESH_TOKEN_DURATION")
 
 	viper.AutomaticEnv()
 
@@ -44,18 +46,3 @@ func LoadConfig(path string) (config Config, err error) {
 	err = viper.Unmarshal(&config)
 	return
 }
-
-// func LoadConfig(path string) (config Config, err error) {
-// 	viper.AutomaticEnv() // Use env variables first
-
-// 	if _, statErr := os.Stat(".env.test"); statErr == nil {
-// 		viper.SetConfigFile(".env.test")
-// 		err = viper.ReadInConfig() // Load from .env.test if it exists
-// 		if err != nil {
-// 			return
-// 		}
-// 	}
-
-// 	err = viper.Unmarshal(&config)
-// 	return
-// }
