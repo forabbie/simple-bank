@@ -58,10 +58,8 @@ jobs:
           echo "TOKEN_SYMMETRIC_KEY=${{ secrets.TOKEN_SYMMETRIC_KEY }}" >> .env
           echo "ACCESS_TOKEN_DURATION=${{ secrets.ACCESS_TOKEN_DURATION }}" >> .env
 
-      - name: Move .env file (if needed)
-        run: |
-          mkdir -p path/to/expected/location
-          mv .env path/to/expected/location/.env
+      - name: Debug .env file
+        run: cat .env
 
       - name: Run migrations
         run: make migrateup
