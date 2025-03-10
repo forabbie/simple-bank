@@ -153,7 +153,7 @@ func TestCreateAccountAPI(t *testing.T) {
 		{
 			name: "OK",
 			body: gin.H{
-				"owner":    account.Owner,
+				// "owner":    account.Owner,
 				"currency": account.Currency,
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
@@ -161,7 +161,7 @@ func TestCreateAccountAPI(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				arg := db.CreateAccountParams{
-					Owner:    account.Owner,
+					Owner:    user.Username,
 					Currency: account.Currency,
 					Balance:  0,
 				}
