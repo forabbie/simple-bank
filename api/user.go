@@ -8,6 +8,7 @@ import (
 
 	db "github.com/forabbie/vank-app/database/sqlc"
 	"github.com/forabbie/vank-app/models"
+	"github.com/forabbie/vank-app/token"
 	"github.com/forabbie/vank-app/util"
 	"github.com/forabbie/vank-app/validator"
 	"github.com/gin-gonic/gin"
@@ -120,7 +121,7 @@ func (server *Server) loginUser(ctx *gin.Context) {
 		return
 	}
 
-	user, err := server.store.GetUser(ctx, req.Username)
+	user, err := server.store.GetUserByUsername(ctx, req.Username)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ctx.JSON(http.StatusUnauthorized, gin.H{
@@ -178,4 +179,83 @@ func (server *Server) loginUser(ctx *gin.Context) {
 		RefreshTokenExpiresAt: refreshPayload.ExpiredAt,
 		User:                  newUserResponse(user),
 	})
+}
+
+func (server *Server) updateUser(ctx *gin.Context) {
+	var req models.UpdateUserRequest
+
+	// Bind the ID from the URL and the rest from JSON
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+		return
+	}
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
+	// Fetch the existing user to verify ownership
+	existingUser, err := server.store.GetUserByUsername(ctx, authPayload.Username)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	// Ensure the authenticated user can only update their own account
+	if existingUser.ID != req.ID {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	var hashedPassword sql.NullString
+	if req.Password != nil && *req.Password != "" {
+		hashed, err := util.HashPassword(*req.Password)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to hash password"})
+			return
+		}
+		hashedPassword = sql.NullString{String: hashed, Valid: true}
+	} else {
+		hashedPassword = sql.NullString{Valid: false} // Keeps existing password
+	}
+
+	// Convert FullName and Email to sql.NullString
+	fullName := sql.NullString{}
+	if req.FullName != nil {
+		fullName = sql.NullString{String: *req.FullName, Valid: true}
+	}
+
+	email := sql.NullString{}
+	if req.Email != nil {
+		email = sql.NullString{String: *req.Email, Valid: true}
+	}
+
+	arg := db.UpdateUserParams{
+		ID:             req.ID, // ✅ Correctly extracted ID from URL
+		HashedPassword: hashedPassword,
+		FullName:       fullName,
+		Email:          email,
+	}
+
+	// Perform the update
+	updatedUser, err := server.store.UpdateUser(ctx, arg)
+	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok {
+			switch pqErr.Code.Name() {
+			case "unique_violation":
+				ctx.JSON(http.StatusConflict, gin.H{
+					"error":   "validation failed",
+					"details": gin.H{"error": "username or email already exists"},
+				})
+				return
+			}
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user"})
+		return
+	}
+
+	rsp := newUserResponse(updatedUser)
+	ctx.JSON(http.StatusOK, rsp)
 }

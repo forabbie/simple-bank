@@ -10,9 +10,11 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"time"
 
 	mockdb "github.com/forabbie/vank-app/database/mock"
 	db "github.com/forabbie/vank-app/database/sqlc"
+	"github.com/forabbie/vank-app/token"
 	"github.com/forabbie/vank-app/util"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
@@ -217,7 +219,7 @@ func TestLoginUserAPI(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					GetUser(gomock.Any(), gomock.Eq(user.Username)).
+					GetUserByUsername(gomock.Any(), gomock.Eq(user.Username)).
 					Times(1).
 					Return(user, nil)
 				store.EXPECT().
@@ -236,7 +238,7 @@ func TestLoginUserAPI(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					GetUser(gomock.Any(), gomock.Any()).
+					GetUserByUsername(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(db.User{}, sql.ErrNoRows)
 			},
@@ -252,7 +254,7 @@ func TestLoginUserAPI(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					GetUser(gomock.Any(), gomock.Eq(user.Username)).
+					GetUserByUsername(gomock.Any(), gomock.Eq(user.Username)).
 					Times(1).
 					Return(user, nil)
 			},
@@ -268,7 +270,7 @@ func TestLoginUserAPI(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					GetUser(gomock.Any(), gomock.Any()).
+					GetUserByUsername(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(db.User{}, sql.ErrConnDone)
 			},
@@ -284,7 +286,7 @@ func TestLoginUserAPI(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					GetUser(gomock.Any(), gomock.Any()).
+					GetUserByUsername(gomock.Any(), gomock.Any()).
 					Times(0)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
@@ -320,12 +322,110 @@ func TestLoginUserAPI(t *testing.T) {
 	}
 }
 
+type eqUpdateUserParamsMatcher struct {
+	arg      db.UpdateUserParams
+	password string
+}
+
+func (e eqUpdateUserParamsMatcher) Matches(x interface{}) bool {
+	arg, ok := x.(db.UpdateUserParams)
+	if !ok {
+		return false
+	}
+
+	// Validate hashed password
+	err := util.CheckPassword(e.password, arg.HashedPassword.String)
+	if err != nil {
+		return false
+	}
+
+	e.arg.HashedPassword = arg.HashedPassword
+	return reflect.DeepEqual(e.arg, arg)
+}
+
+func (e eqUpdateUserParamsMatcher) String() string {
+	return fmt.Sprintf("matches arg %v and password %v", e.arg, e.password)
+}
+
+func EqUpdateUserParams(arg db.UpdateUserParams, password string) gomock.Matcher {
+	return eqUpdateUserParamsMatcher{arg, password}
+}
+
+func TestUpdateUserAPI(t *testing.T) {
+	user, password := randomUser(t)
+	updatedUser := user
+
+	testCases := []struct {
+		name          string
+		body          gin.H
+		setupAuth     func(t *testing.T, request *http.Request, tokenMaker token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkResponse func(recorder *httptest.ResponseRecorder)
+	}{
+		{
+			name: "OK",
+			body: gin.H{
+				"full_name": user.FullName,
+				"email":     user.Email,
+				"password":  password,
+			},
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetUserByUsername(gomock.Any(), gomock.Eq(user.Username)).
+					Times(1).
+					Return(user, nil)
+
+				arg := db.UpdateUserParams{
+					ID:       user.ID,
+					FullName: sql.NullString{String: user.FullName, Valid: true},
+					Email:    sql.NullString{String: user.Email, Valid: true},
+				}
+
+				store.EXPECT().
+					UpdateUser(gomock.Any(), EqUpdateUserParams(arg, password)).
+					Times(1).
+					Return(updatedUser, nil)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, recorder.Code)
+				requireBodyMatchUser(t, recorder.Body, updatedUser)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			store := mockdb.NewMockStore(ctrl)
+			tc.buildStubs(store)
+
+			server := newTestServer(t, store)
+			recorder := httptest.NewRecorder()
+
+			data, _ := json.Marshal(tc.body)
+			url := fmt.Sprintf("/api/v1/users/%d", user.ID)
+			request, _ := http.NewRequest(http.MethodPatch, url, bytes.NewReader(data))
+			request.Header.Set("Content-Type", "application/json")
+
+			tc.setupAuth(t, request, server.tokenMaker)
+			server.router.ServeHTTP(recorder, request)
+			tc.checkResponse(recorder)
+		})
+	}
+}
+
 func randomUser(t *testing.T) (user db.User, password string) {
 	password = util.RandomString(6)
 	hashedPassword, err := util.HashPassword(password)
 	require.NoError(t, err)
 
 	user = db.User{
+		ID:             util.RandomInt(1, 1000),
 		Username:       util.RandomOwner(),
 		HashedPassword: hashedPassword,
 		FullName:       util.RandomOwner(),

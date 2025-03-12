@@ -59,6 +59,8 @@ func (server *Server) setupRouter() {
 
 	authRoutes.POST("/transfers", server.createTransfer)
 
+	authRoutes.PATCH("/users/:id", server.updateUser)
+
 	server.router = router
 }
 
