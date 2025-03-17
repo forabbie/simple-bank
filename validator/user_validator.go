@@ -1,12 +1,12 @@
 package validator
 
 import (
-	"github.com/forabbie/vank-app/models"
+	db "github.com/forabbie/vank-app/database/sqlc"
 	"github.com/forabbie/vank-app/util"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 )
 
-func ValidateLoginUserRequest(req *models.LoginUserRequest) []*errdetails.BadRequest_FieldViolation {
+func ValidateLoginUserRequest(req *db.LoginUserRequest) []*errdetails.BadRequest_FieldViolation {
 	var violations []*errdetails.BadRequest_FieldViolation
 
 	if err := ValidateUsername(req.Username); err != nil {
@@ -20,7 +20,7 @@ func ValidateLoginUserRequest(req *models.LoginUserRequest) []*errdetails.BadReq
 	return violations
 }
 
-func ValidateCreateUserRequest(req *models.CreateUserRequest) []*errdetails.BadRequest_FieldViolation {
+func ValidateCreateUserRequest(req *db.CreateUserRequest) []*errdetails.BadRequest_FieldViolation {
 	var violations []*errdetails.BadRequest_FieldViolation
 
 	if err := ValidateUsername(req.Username); err != nil {

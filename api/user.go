@@ -7,7 +7,6 @@ import (
 	"time"
 
 	db "github.com/forabbie/vank-app/database/sqlc"
-	"github.com/forabbie/vank-app/models"
 	"github.com/forabbie/vank-app/token"
 	"github.com/forabbie/vank-app/util"
 	"github.com/forabbie/vank-app/validator"
@@ -43,7 +42,7 @@ func newUserResponse(user db.User) userResponse {
 }
 
 func (server *Server) createUser(ctx *gin.Context) {
-	var req models.CreateUserRequest
+	var req db.CreateUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, util.FormatValidationErrors(err))
 		return
@@ -104,7 +103,7 @@ type loginUserResponse struct {
 }
 
 func (server *Server) loginUser(ctx *gin.Context) {
-	var req models.LoginUserRequest
+	var req db.LoginUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, util.FormatValidationErrors(err))
 		return
@@ -182,7 +181,7 @@ func (server *Server) loginUser(ctx *gin.Context) {
 }
 
 func (server *Server) updateUser(ctx *gin.Context) {
-	var req models.UpdateUserRequest
+	var req db.UpdateUserRequest
 
 	// Bind the ID from the URL and the rest from JSON
 	if err := ctx.ShouldBindUri(&req); err != nil {

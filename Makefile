@@ -20,6 +20,9 @@ migratedown:
 
 migratedown1:
 	migrate -path database/migration -database "$(DB_URL)" -verbose down 1
+	
+new_migration:
+	migrate create -ext sql -dir database/migration -seq $(name)
 
 sqlc:
 	sqlc generate
@@ -33,4 +36,4 @@ server:
 mock:
 	mockgen -destination database/mock/store.go github.com/forabbie/vank-app/database/sqlc Store
 
-.PHONY: postgres createdb dropdb migrateup migrateup1 migratedown migratedown1 sqlc test server mock
+.PHONY: postgres createdb dropdb migrateup migrateup1 migratedown migratedown1 new_migration sqlc test server mock
