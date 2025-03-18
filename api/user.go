@@ -7,6 +7,7 @@ import (
 	"time"
 
 	db "github.com/forabbie/vank-app/database/sqlc"
+	"github.com/forabbie/vank-app/mail"
 	"github.com/forabbie/vank-app/token"
 	"github.com/forabbie/vank-app/util"
 	"github.com/forabbie/vank-app/validator"
@@ -15,20 +16,15 @@ import (
 	"github.com/lib/pq"
 )
 
-type createUserResponse struct {
-	Username          string    `json:"username"`
-	FullName          string    `json:"full_name"`
-	Email             string    `json:"email"`
-	PasswordChangedAt time.Time `json:"password_changed_at"`
-	CreatedAt         time.Time `json:"created_at"`
-}
-
 type userResponse struct {
 	Username          string    `json:"username"`
 	FullName          string    `json:"full_name"`
 	Email             string    `json:"email"`
 	PasswordChangedAt time.Time `json:"password_changed_at"`
 	CreatedAt         time.Time `json:"created_at"`
+}
+type TaskProcessor struct {
+	mailer mail.EmailSender
 }
 
 func newUserResponse(user db.User) userResponse {
@@ -43,6 +39,7 @@ func newUserResponse(user db.User) userResponse {
 
 func (server *Server) createUser(ctx *gin.Context) {
 	var req db.CreateUserRequest
+
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, util.FormatValidationErrors(err))
 		return
@@ -188,6 +185,7 @@ func (server *Server) updateUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
 		return
 	}
+
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
@@ -232,7 +230,7 @@ func (server *Server) updateUser(ctx *gin.Context) {
 	}
 
 	arg := db.UpdateUserParams{
-		ID:             req.ID, // ✅ Correctly extracted ID from URL
+		ID:             req.ID,
 		HashedPassword: hashedPassword,
 		FullName:       fullName,
 		Email:          email,
