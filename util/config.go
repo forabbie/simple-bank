@@ -25,6 +25,16 @@ func LoadConfig(path string) (config Config, err error) {
 	viper.SetConfigName(".env")
 	viper.SetConfigType("env")
 
+	viper.BindEnv("DB_DRIVER")
+	viper.BindEnv("DB_SOURCE")
+	viper.BindEnv("SERVER_ADDRESS")
+	viper.BindEnv("TOKEN_SYMMETRIC_KEY")
+	viper.BindEnv("ACCESS_TOKEN_DURATION")
+	viper.BindEnv("REFRESH_TOKEN_DURATION")
+	viper.BindEnv("EMAIL_SENDER_NAME")
+	viper.BindEnv("EMAIL_SENDER_ADDRESS")
+	viper.BindEnv("EMAIL_SENDER_PASSWORD")
+
 	viper.AutomaticEnv()
 
 	// Try to read the .env file, but don't fail if it's missing
