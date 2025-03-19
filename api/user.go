@@ -7,7 +7,6 @@ import (
 	"time"
 
 	db "github.com/forabbie/vank-app/database/sqlc"
-	"github.com/forabbie/vank-app/mail"
 	"github.com/forabbie/vank-app/token"
 	"github.com/forabbie/vank-app/util"
 	"github.com/forabbie/vank-app/validator"
@@ -23,9 +22,10 @@ type userResponse struct {
 	PasswordChangedAt time.Time `json:"password_changed_at"`
 	CreatedAt         time.Time `json:"created_at"`
 }
-type TaskProcessor struct {
-	mailer mail.EmailSender
-}
+
+// type TaskProcessor struct {
+// 	mailer mail.EmailSender
+// }
 
 func newUserResponse(user db.User) userResponse {
 	return userResponse{

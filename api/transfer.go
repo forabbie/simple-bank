@@ -75,3 +75,48 @@ func (server *Server) validAccount(ctx *gin.Context, accountID int64, currency s
 	}
 	return account, true
 }
+
+type listTransfersRequest struct {
+	FromAccountID int64 `form:"from_account_id" binding:"required"`
+	ToAccountID   int64 `form:"to_account_id" binding:"required"`
+	Page          int32 `form:"page" binding:"required,min=1"`
+	Limit         int32 `form:"limit" binding:"required,min=5,max=10"`
+}
+
+func (server *Server) listTransfers(ctx *gin.Context) {
+	var req listTransfersRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
+	// Fetch account details to check ownership
+	account, err := server.store.GetAccount(ctx, req.FromAccountID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	// Ensure the user can only view their own transactions
+	if authPayload.Username != account.Owner {
+		ctx.JSON(http.StatusUnauthorized, errorResponse(errors.New("unauthorized account access")))
+		return
+	}
+
+	arg := db.ListTransfersParams{
+		FromAccountID: req.FromAccountID,
+		ToAccountID:   req.ToAccountID,
+		Limit:         req.Limit,
+		Offset:        (req.Page - 1) * req.Limit,
+	}
+
+	transfers, err := server.store.ListTransfers(ctx, arg)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, transfers)
+}

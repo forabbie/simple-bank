@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -289,4 +290,146 @@ func TestTransferAPI(t *testing.T) {
 			tc.checkResponse(recorder)
 		})
 	}
+}
+
+func TestListTransfersAPI(t *testing.T) {
+	user, _ := randomUser(t)
+
+	n := 5
+	transfers := make([]db.Transfer, n)
+	for i := 0; i < n; i++ {
+		transfers[i] = randomTransfer(user.ID)
+	}
+
+	// Use exported field names
+	type Query struct {
+		Limit int
+		Page  int
+	}
+
+	testCases := []struct {
+		name          string
+		query         Query
+		setupAuth     func(t *testing.T, request *http.Request, tokenMaker token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkResponse func(recorder *httptest.ResponseRecorder)
+	}{
+		{
+			name: "OK",
+			query: Query{
+				Page:  1,
+				Limit: n,
+			},
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetAccount(gomock.Any(), gomock.Eq(user.ID)).
+					Times(1).
+					Return(db.Account{ID: user.ID, Owner: user.Username}, nil)
+				arg := db.ListTransfersParams{
+					FromAccountID: user.ID,
+					ToAccountID:   user.ID,
+					Limit:         5,
+					Offset:        0,
+				}
+
+				store.EXPECT().
+					ListTransfers(gomock.Any(), gomock.Eq(arg)).
+					Times(1).
+					Return(transfers, nil)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, recorder.Code)
+				requireBodyMatchTransfers(t, recorder.Body, transfers)
+			},
+		},
+		{
+			name: "NoAuthorization",
+			query: Query{
+				Page:  1,
+				Limit: n,
+			},
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().ListTransfers(gomock.Any(), gomock.Any()).Times(0)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
+			},
+		},
+		{
+			name: "InternalError",
+			query: Query{
+				Page:  1,
+				Limit: n,
+			},
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetAccount(gomock.Any(), gomock.Eq(user.ID)).
+					Times(1).
+					Return(db.Account{ID: user.ID, Owner: user.Username}, nil)
+
+				store.EXPECT().
+					ListTransfers(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return([]db.Transfer{}, sql.ErrConnDone)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+	}
+
+	for i := range testCases {
+		tc := testCases[i]
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			store := mockdb.NewMockStore(ctrl)
+			tc.buildStubs(store)
+
+			server := newTestServer(t, store)
+			recorder := httptest.NewRecorder()
+
+			url := "/api/v1/transfers"
+			request, err := http.NewRequest(http.MethodGet, url, nil)
+			require.NoError(t, err)
+
+			// Add query parameters to request URL
+			q := request.URL.Query()
+			q.Add("from_account_id", fmt.Sprintf("%d", user.ID))
+			q.Add("to_account_id", fmt.Sprintf("%d", user.ID))
+			q.Add("limit", fmt.Sprintf("%d", tc.query.Limit))
+			q.Add("page", fmt.Sprintf("%d", tc.query.Page))
+			request.URL.RawQuery = q.Encode()
+
+			tc.setupAuth(t, request, server.tokenMaker)
+			server.router.ServeHTTP(recorder, request)
+			tc.checkResponse(recorder)
+		})
+	}
+}
+
+func randomTransfer(id int64) db.Transfer {
+	return db.Transfer{
+		ID:            util.RandomInt(1, 1000),
+		FromAccountID: id,
+		ToAccountID:   id,
+		Amount:        util.RandomMoney(),
+	}
+}
+
+func requireBodyMatchTransfers(t *testing.T, body *bytes.Buffer, expectedTransfers []db.Transfer) {
+	var gotTransfers []db.Transfer
+	err := json.NewDecoder(body).Decode(&gotTransfers)
+	require.NoError(t, err)
+
+	require.Equal(t, expectedTransfers, gotTransfers)
 }

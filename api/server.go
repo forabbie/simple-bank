@@ -58,6 +58,7 @@ func (server *Server) setupRouter() {
 	authRoutes.GET("/accounts", server.listAccount)
 
 	authRoutes.POST("/transfers", server.createTransfer)
+	authRoutes.GET("/transfers", server.listTransfers)
 
 	authRoutes.PATCH("/users/:id", server.updateUser)
 
