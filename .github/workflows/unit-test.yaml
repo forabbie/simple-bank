@@ -57,6 +57,9 @@ jobs:
           echo "SERVER_ADDRESS=${{ secrets.SERVER_ADDRESS }}" >> .env
           echo "TOKEN_SYMMETRIC_KEY=${{ secrets.TOKEN_SYMMETRIC_KEY }}" >> .env
           echo "ACCESS_TOKEN_DURATION=${{ secrets.ACCESS_TOKEN_DURATION }}" >> .env
+          echo "EMAIL_SENDER_NAME=${{ secrets.EMAIL_SENDER_NAME }}" >> .env
+          echo "EMAIL_SENDER_ADDRESS=${{ secrets.EMAIL_SENDER_ADDRESS }}" >> .env
+          echo "EMAIL_SENDER_PASSWORD=${{ secrets.EMAIL_SENDER_PASSWORD }}" >> .env
 
       - name: Debug .env file
         run: cat .env
