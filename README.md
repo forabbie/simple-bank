@@ -130,15 +130,18 @@ Ensure you have the following tools installed:
 
 ## API Documentation 📖
 
+# API Documentation 👋
+
 ### User Management
 
 #### Register a New User
 
 ```
-POST /api/v1/users
+HTTP Method: POST
+URL: {{url}}/api/v1/users
 ```
 
-**Request Body:**
+**Sample Request Body:**
 
 ```json
 {
@@ -148,13 +151,23 @@ POST /api/v1/users
 }
 ```
 
+**Parameters**
+| Name | Description | Required |
+| -------- | ---------------- | -------- |
+| username | User username | Yes |
+| email | User email | Yes |
+| password | User password | Yes |
+
+---
+
 #### Login User
 
 ```
-POST /api/v1/users/login
+HTTP Method: POST
+URL: {{url}}/api/v1/users/login
 ```
 
-**Request Body:**
+**Sample Request Body:**
 
 ```json
 {
@@ -163,13 +176,22 @@ POST /api/v1/users/login
 }
 ```
 
+**Parameters**
+| Name | Description | Required |
+| -------- | ------------- | -------- |
+| email | User email | Yes |
+| password | User password | Yes |
+
+---
+
 #### Renew Access Token
 
 ```
-POST /api/v1/tokens/renew_access
+HTTP Method: POST
+URL: {{url}}/api/v1/tokens/renew_access
 ```
 
-**Request Body:**
+**Sample Request Body:**
 
 ```json
 {
@@ -177,13 +199,21 @@ POST /api/v1/tokens/renew_access
 }
 ```
 
+**Parameters**
+| Name | Description | Required |
+| ------------- | ------------------ | -------- |
+| refresh_token | User refresh token | Yes |
+
+---
+
 #### Update User
 
 ```
-PATCH /api/v1/users/:id
+HTTP Method: PATCH
+URL: {{url}}/api/v1/users/:id
 ```
 
-**Request Body:**
+**Sample Request Body:**
 
 ```json
 {
@@ -191,15 +221,23 @@ PATCH /api/v1/users/:id
 }
 ```
 
+**Parameters**
+| Name | Description | Required |
+| ----- | ---------------- | -------- |
+| email | New user email | No |
+
+---
+
 ### Account Management
 
 #### Create Account
 
 ```
-POST /api/v1/accounts
+HTTP Method: POST
+URL: {{url}}/api/v1/accounts
 ```
 
-**Request Body:**
+**Sample Request Body:**
 
 ```json
 {
@@ -208,27 +246,53 @@ POST /api/v1/accounts
 }
 ```
 
+**Parameters**
+| Name | Description | Required |
+| ------- | --------------------- | -------- |
+| owner | Account owner username | Yes |
+| balance | Initial balance amount | Yes |
+
+---
+
 #### Get Account by ID
 
 ```
-GET /api/v1/accounts/:id
+HTTP Method: GET
+URL: {{url}}/api/v1/accounts/:id
 ```
+
+**Parameters**
+| Name | Description | Required |
+| ---- | --------------------- | -------- |
+| id | Account ID | Yes |
+
+---
 
 #### List Accounts
 
 ```
-GET /api/v1/accounts?page={page}&limit={limit}
+HTTP Method: GET
+URL: {{url}}/api/v1/accounts?page={page}&limit={limit}
 ```
+
+**Parameters**
+| Name | Description | Required |
+| ----- | --------------------------- | -------- |
+| page | Page number for pagination | No |
+| limit | Number of records per page | No |
+
+---
 
 ### Transfer Management
 
 #### Create Transfer
 
 ```
-POST /api/v1/transfers
+HTTP Method: POST
+URL: {{url}}/api/v1/transfers
 ```
 
-**Request Body:**
+**Sample Request Body:**
 
 ```json
 {
@@ -238,10 +302,24 @@ POST /api/v1/transfers
 }
 ```
 
+**Parameters**
+| Name | Description | Required |
+| -------------- | ----------------------- | -------- |
+| from_account_id | ID of sender account | Yes |
+| to_account_id | ID of recipient account | Yes |
+| amount | Transfer amount | Yes |
+
+---
+
 #### List Transfers
 
 ```
-GET /api/v1/transfers?page={page}&limit={limit}
+HTTP Method: GET
+URL: {{url}}/api/v1/transfers?page={page}&limit={limit}
 ```
 
----
+**Parameters**
+| Name | Description | Required |
+| ----- | --------------------------- | -------- |
+| page | Page number for pagination | No |
+| limit | Number of records per page | No |
