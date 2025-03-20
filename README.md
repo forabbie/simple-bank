@@ -1,7 +1,5 @@
 # Simple Bank
 
-From [Backend Master Class](https://bit.ly/backendmaster) course by [TECH SCHOOL](https://bit.ly/m/techschool). A course that teaches step-by-step how to design, develop, and deploy a backend web service from scratch.
-
 ## Overview
 
 Simple Bank provides APIs for the frontend to perform the following operations:
@@ -129,8 +127,6 @@ Ensure you have the following tools installed:
   ```
 
 ## API Documentation 📖
-
-# API Documentation 👋
 
 ### User Management
 
