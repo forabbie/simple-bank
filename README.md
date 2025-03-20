@@ -1,27 +1,28 @@
 # Simple Bank
 
-From [Backend Master Class](https://bit.ly/backendmaster) course by [TECH SCHOOL](https://bit.ly/m/techschool).
-A course that teach on step-by-step how to design, develop and deploy a backend web service from scratch.
+From [Backend Master Class](https://bit.ly/backendmaster) course by [TECH SCHOOL](https://bit.ly/m/techschool). A course that teaches step-by-step how to design, develop, and deploy a backend web service from scratch.
 
-Simple Bank provide APIs for the frontend to do the following things:
+## Overview
+
+Simple Bank provides APIs for the frontend to perform the following operations:
 
 - Create and manage bank accounts.
-- Record all balance changes to each of the accounts.
-- Perform a money transfer between 2 accounts.
+- Record all balance changes to each account.
+- Perform money transfers between accounts.
 
-## Simple bank service
+## Features
 
-The service that we’re going to build is a simple bank. It will provide APIs for the frontend to do following things:
+1. **Bank Accounts**: Users can create and manage accounts with an owner's name, balance, and currency.
+2. **Transaction Records**: Every deposit or withdrawal is recorded for accountability.
+3. **Money Transfers**: Secure transactions between accounts are handled within a transaction to ensure consistency.
 
-1. Create and manage bank accounts, which are composed of owner’s name, balance, and currency.
-2. Record all balance changes to each of the account. So every time some money is added to or subtracted from the account, an account entry record will be created.
-3. Perform a money transfer between 2 accounts. This should happen within a transaction, so that either both accounts’ balance are updated successfully or none of them are.
+## Setup Local Development
 
-## Setup local development
+### Install Required Tools
 
-### Install tools
+Ensure you have the following tools installed:
 
-- [Docker desktop](https://www.docker.com/products/docker-desktop)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop)
 - [TablePlus](https://tableplus.com/)
 - [Golang](https://golang.org/)
 - [Homebrew](https://brew.sh/)
@@ -29,20 +30,6 @@ The service that we’re going to build is a simple bank. It will provide APIs f
 
   ```bash
   brew install golang-migrate
-  ```
-
-- [DB Docs](https://dbdocs.io/docs)
-
-  ```bash
-  npm install -g dbdocs
-  dbdocs login
-  ```
-
-- [DBML CLI](https://www.dbml.org/cli/#installation)
-
-  ```bash
-  npm install -g @dbml/cli
-  dbml2sql --version
   ```
 
 - [Sqlc](https://github.com/kyleconroy/sqlc#installation)
@@ -57,110 +44,204 @@ The service that we’re going to build is a simple bank. It will provide APIs f
   go install github.com/golang/mock/mockgen@v1.6.0
   ```
 
-### Setup infrastructure
+### Setup Infrastructure
 
-- Create the bank-network
+1. Create the bank network:
 
-  ```bash
-  make network
-  ```
+   ```bash
+   make network
+   ```
 
-- Start postgres container:
+2. Start the PostgreSQL container:
 
-  ```bash
-  make postgres
-  ```
+   ```bash
+   make postgres
+   ```
 
-- Create simple_bank database:
+3. Create the `simple_bank` database:
 
-  ```bash
-  make createdb
-  ```
+   ```bash
+   make createdb
+   ```
 
-- Run db migration up all versions:
+4. Run database migrations:
 
-  ```bash
-  make migrateup
-  ```
+   ```bash
+   make migrateup
+   ```
 
-- Run db migration up 1 version:
+5. Run a single migration:
 
-  ```bash
-  make migrateup1
-  ```
+   ```bash
+   make migrateup1
+   ```
 
-- Run db migration down all versions:
+6. Rollback all migrations:
 
-  ```bash
-  make migratedown
-  ```
+   ```bash
+   make migratedown
+   ```
 
-- Run db migration down 1 version:
+7. Rollback a single migration:
 
-  ```bash
-  make migratedown1
-  ```
+   ```bash
+   make migratedown1
+   ```
 
-### Documentation
+### Code Generation
 
-- Generate DB documentation:
-
-  ```bash
-  make db_docs
-  ```
-
-- Access the DB documentation at [this address](https://dbdocs.io/techschool.guru/simple_bank). Password: `secret`
-
-### How to generate code
-
-- Generate schema SQL file with DBML:
+- Generate schema SQL file:
 
   ```bash
   make db_schema
   ```
 
-- Generate SQL CRUD with sqlc:
+- Generate SQL CRUD operations:
 
   ```bash
   make sqlc
   ```
 
-- Generate DB mock with gomock:
+- Generate database mock:
 
   ```bash
   make mock
   ```
 
-- Create a new db migration:
+- Create a new database migration:
 
   ```bash
   make new_migration name=<migration_name>
   ```
 
-### How to run
+### Running the Project
 
-- Run server:
+- Start the server:
 
   ```bash
   make server
   ```
 
-- Run test:
+- Run tests:
 
   ```bash
   make test
   ```
 
-## Deploy to kubernetes cluster
+## API Documentation 📖
 
-- [Install nginx ingress controller](https://kubernetes.github.io/ingress-nginx/deploy/#aws):
+### User Management
 
-  ```bash
-  kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.48.1/deploy/static/provider/aws/deploy.yaml
-  ```
+#### Register a New User
 
-- [Install cert-manager](https://cert-manager.io/docs/installation/kubernetes/):
+```
+POST /api/v1/users
+```
 
-  ```bash
-  kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.4.0/cert-manager.yaml
-  ```
+**Request Body:**
+
+```json
+{
+  "username": "exampleUser",
+  "email": "user@example.com",
+  "password": "securepassword"
+}
+```
+
+#### Login User
+
+```
+POST /api/v1/users/login
+```
+
+**Request Body:**
+
+```json
+{
+  "email": "user@example.com",
+  "password": "securepassword"
+}
+```
+
+#### Renew Access Token
+
+```
+POST /api/v1/tokens/renew_access
+```
+
+**Request Body:**
+
+```json
+{
+  "refresh_token": "your-refresh-token"
+}
+```
+
+#### Update User
+
+```
+PATCH /api/v1/users/:id
+```
+
+**Request Body:**
+
+```json
+{
+  "email": "newemail@example.com"
+}
+```
+
+### Account Management
+
+#### Create Account
+
+```
+POST /api/v1/accounts
+```
+
+**Request Body:**
+
+```json
+{
+  "owner": "exampleUser",
+  "balance": 1000
+}
+```
+
+#### Get Account by ID
+
+```
+GET /api/v1/accounts/:id
+```
+
+#### List Accounts
+
+```
+GET /api/v1/accounts?page={page}&limit={limit}
+```
+
+### Transfer Management
+
+#### Create Transfer
+
+```
+POST /api/v1/transfers
+```
+
+**Request Body:**
+
+```json
+{
+  "from_account_id": 1,
+  "to_account_id": 2,
+  "amount": 500
+}
+```
+
+#### List Transfers
+
+```
+GET /api/v1/transfers?page={page}&limit={limit}
+```
+
+---
